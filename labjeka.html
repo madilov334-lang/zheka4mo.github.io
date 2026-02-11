@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра с квадратами</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+    body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #f5e6d3 0%, #d4c4b0 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .game-container {
+        text-align: center;
+    }
+
+    .game-title {
+        font-size: 56px;
+        font-weight: bold;
+        color: #6b5444;
+        margin-bottom: 25px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        letter-spacing: 2px;
+    }
+
+    .info-panel {
+        display: flex;
+        justify-content: space-around;
+        gap: 40px;
+        margin-bottom: 30px;
+        background: #e8dcc8;
+        padding: 20px 40px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .info-label {
+        font-size: 16px;
+        color: #8b7355;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .info-value {
+        font-size: 48px;
+        font-weight: bold;
+        color: #6b5444;
+    }
+
+    #game-field {
+        width: 850px;
+        height: 850px;
+        background: #f0e5d8;
+        border: 4px solid #c4b5a0;
+        border-radius: 10px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .square {
+        position: absolute;
+        background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+        border: 3px solid #a08060;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .square:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .square:active {
+        transform: scale(0.95);
+    }
+
+    .game-over-overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(232, 220, 200, 0.95);
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 1000;
+    }
+
+    .game-over-overlay.show {
+        display: flex;
+    }
+
+    .game-over-text {
+        font-size: 48px;
+        font-weight: bold;
+        color: #6b5444;
+        margin-bottom: 20px;
+    }
+
+    .final-score {
+        font-size: 36px;
+        color: #8b7355;
+        margin-bottom: 30px;
+    }
+
+    .restart-btn {
+        padding: 15px 40px;
+        font-size: 20px;
+        background: linear-gradient(135deg, #d4a574 0%, #b8956a 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+
+    .restart-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .restart-btn:active {
+        transform: translateY(0);
+    }
+
+    @media (max-width: 768px) {
+        #game-field {
+            width: 90vw;
+            height: 90vw;
+            max-width: 500px;
+            max-height: 500px;
+        }
+
+        .info-value {
+            font-size: 36px;
+        }
+
+        .game-over-text {
+            font-size: 36px;
+        }
+
+        .final-score {
+            font-size: 24px;
+        }
+    }
+</style>
+
+
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="game-title">ПОЙМАЙ КВАДРАТ</h1>
+
+
+    <div class="info-panel">
+        <div class="info-item">
+            <div class="info-label">Время</div>
+            <div class="info-value" id="timer">60</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Очки</div>
+            <div class="info-value" id="score">0</div>
+        </div>
+    </div>
+
+    <div id="game-field">
+        <div class="game-over-overlay" id="gameOverOverlay">
+            <div class="game-over-text">Игра окончена!</div>
+            <div class="final-score">Ваш счёт: <span id="finalScore">0</span></div>
+            <button class="restart-btn" onclick="restartGame()">Начать заново</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let score = 0;
+    let timeLeft = 60;
+    let gameActive = false;
+    let timerInterval;
+    let squareInterval;
+    let currentSquare = null;
+
+    const gameField = document.getElementById('game-field');
+    const scoreElement = document.getElementById('score');
+    const timerElement = document.getElementById('timer');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const finalScoreElement = document.getElementById('finalScore');
+
+    function startGame() {
+        score = 0;
+        timeLeft = 60;
+        gameActive = true;
+        scoreElement.textContent = score;
+        timerElement.textContent = timeLeft;
+        gameOverOverlay.classList.remove('show');
+
+        // Удаляем все существующие квадраты
+        const squares = document.querySelectorAll('.square');
+        squares.forEach(sq => sq.remove());
+
+        // Запускаем таймер
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerElement.textContent = timeLeft;
+
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }, 1000);
+
+        // Запускаем появление квадратов
+        spawnSquare(); // Первый квадрат сразу
+        squareInterval = setInterval(spawnSquare, 2000);
+    }
+
+    function spawnSquare() {
+        if (!gameActive) return;
+
+        // Удаляем предыдущий квадрат
+        if (currentSquare) {
+            currentSquare.remove();
+        }
+
+        // Создаём новый квадрат
+        const square = document.createElement('div');
+        square.classList.add('square');
+
+        // Случайный размер квадрата (от 2x2 до 4x4 клеток)
+        const gridSize = Math.floor(Math.random() * 3) + 2; // 2-4
+        const cellSize = 25; // размер одной клетки (уменьшен)
+        const squareSize = gridSize * cellSize;
+
+        square.style.width = squareSize + 'px';
+        square.style.height = squareSize + 'px';
+
+        // Случайная позиция (с учётом размера квадрата)
+        const maxX = gameField.clientWidth - squareSize;
+        const maxY = gameField.clientHeight - squareSize;
+        const x = Math.floor(Math.random() * maxX);
+        const y = Math.floor(Math.random() * maxY);
+
+        square.style.left = x + 'px';
+        square.style.top = y + 'px';
+
+        // Обработчик клика
+        square.addEventListener('click', () => {
+            if (gameActive) {
+                score++;
+                scoreElement.textContent = score;
+                square.remove();
+                currentSquare = null;
+            }
+        });
+
+        gameField.appendChild(square);
+        currentSquare = square;
+    }
+
+    function endGame() {
+        gameActive = false;
+        clearInterval(timerInterval);
+        clearInterval(squareInterval);
+        finalScoreElement.textContent = score;
+        gameOverOverlay.classList.add('show');
+    }
+
+    function restartGame() {
+        startGame();
+    }
+
+    // Автоматический старт игры при загрузке страницы
+    window.addEventListener('load', () => {
+        startGame();
+    });
+</script>
+
+
+</body>
+</html>
